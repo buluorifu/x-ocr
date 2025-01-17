@@ -35,6 +35,11 @@
 
 直接点击验证码图片即可触发自动识别与填充功能。
 
+<video width="640" height="480" controls>
+  <source src="img/1.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
 ## 💻技术细节
 
 - **前端**：使用JavaScript实现，包括content script和background script。
