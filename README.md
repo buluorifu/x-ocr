@@ -35,9 +35,7 @@
 
 直接点击验证码图片即可触发自动识别与填充功能。
 
-<video width="640" height="480" controls>
-  <source src="img/1.mp4" type="video/mp4">
-</video>
+![Demo GIF](./img/1.gif)
 
 ## 💻技术细节
 
