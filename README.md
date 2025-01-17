@@ -37,7 +37,7 @@
 
 ![Demo GIF](./img/1.gif)
 
-## 💻技术细节
+## 💻功能实现
 
 - **前端**：使用JavaScript实现，包括content script和background script。
 - **通信**：利用Chrome扩展的消息传递API (`chrome.runtime.sendMessage`) 实现前后端通信。
