@@ -1,32 +1,92 @@
 // content.js
 // 当文档加载完成后尝试自动检测并发送验证码图片
-window.onload = function() {
-  const captchaImage = document.querySelector('img[src*="captcha"], img[id*="captcha"], img[class*="captcha"]'); // 根据实际情况调整选择器
+window.onload = function () {
+  // 初始检测验证码图片
+  const captchaImage = document.querySelector('img[src*="aptcha"], img[id*="captcha"], img[class*="captcha"], img[id="checkCodeImg"]');
   if (captchaImage) {
     handleCaptchaClick(captchaImage);
   }
+
+  // 监听 DOM 变化，动态检测新加载的图片
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (node.tagName && node.tagName.toLowerCase() === 'img') {
+          const imgElement = node;
+          if (imgElement.complete && imgElement.naturalWidth !== 0) {
+            handleCaptchaClick(imgElement);
+          } else {
+            imgElement.onload = () => {
+              handleCaptchaClick(imgElement);
+            };
+          }
+        }
+      });
+    });
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
 };
 
+
 function handleCaptchaClick(imgElement) {
-  // 创建canvas元素用于绘制图片
+  const maxRetries = 5; // 最大重试次数
+  const retryInterval = 200; // 每次重试的间隔时间（毫秒）
+
+  let retryCount = 0;
+
+  const checkImageLoaded = () => {
+    if (imgElement.complete && imgElement.naturalWidth !== 0) {
+      processImage(imgElement);
+    } else if (retryCount < maxRetries) {
+      retryCount++;
+      setTimeout(checkImageLoaded, retryInterval);
+    } else {
+      console.error("图片加载超时");
+    }
+  };
+
+  checkImageLoaded();
+}
+
+// 处理图片数据
+function processImage(imgElement) {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
-
-  // 设置canvas尺寸与图片相同
   canvas.width = imgElement.naturalWidth;
   canvas.height = imgElement.naturalHeight;
-
-  // 在canvas上绘制图片
   context.drawImage(imgElement, 0, 0);
-
-  // 获取图片数据URL
   const dataURL = canvas.toDataURL("image/png");
+  chrome.runtime.sendMessage({ action: "captchaClicked", imageData: dataURL });
+}
 
-  // 测试的dataURL到控制台
-  // console.log('Generated Data URL:', dataURL);
+// 监听 DOM 变化，动态检测新加载的图片
+const observer = new MutationObserver((mutations) => {
+  mutations.forEach((mutation) => {
+    mutation.addedNodes.forEach((node) => {
+      if (node.tagName && node.tagName.toLowerCase() === 'img') {
+        const imgElement = node;
+        handleCaptchaClick(imgElement);
+      }
+    });
+  });
+});
 
-  // 发送消息到background脚本，包含dataURL而不是srcUrl
-  chrome.runtime.sendMessage({action: "captchaClicked", imageData: dataURL});
+observer.observe(document.body, { childList: true, subtree: true });
+
+// 监听 src 属性变化
+const captchaImage = document.querySelector('img[id="checkCodeImg"]');
+if (captchaImage) {
+  const srcObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === "attributes" && mutation.attributeName === "src") {
+        handleCaptchaClick(captchaImage);
+      }
+    });
+  });
+
+  srcObserver.observe(captchaImage, { attributes: true });
+  handleCaptchaClick(captchaImage);
 }
 
 // 监听图片点击事件
@@ -84,7 +144,7 @@ function findCaptchaInput() {
     // 检查是否包含常见的验证码关键词
     if (id.includes('captcha') || name.includes('captcha') || placeholder.includes('captcha') || className.includes('captcha') ||
         id.includes('verify') || name.includes('verify') || placeholder.includes('verify') || className.includes('verify') ||
-        id.includes('code') || name.includes('code') || placeholder.includes('code') || className.includes('code')) {
+        id.includes('code') || name.includes('code') || placeholder.includes('code') || className.includes('code')||placeholder.includes('验证码')) {
       return input;
     }
   }
